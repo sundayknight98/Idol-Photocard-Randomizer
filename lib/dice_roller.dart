@@ -2,12 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:confetti/confetti.dart';
-
 import 'photo_messages.dart';
-import 'home_screen.dart';
-
-final randomizer = Random();
 
 class DiceRoller extends StatefulWidget {
   const DiceRoller({super.key});
@@ -17,140 +12,160 @@ class DiceRoller extends StatefulWidget {
 }
 
 class _DiceRollerState extends State<DiceRoller> {
-  var currentDiceRoll = 13;
-  var message = '';
-  var isRevealed = false;
-  var isRandomizing = false;
-
-  late ConfettiController _confettiController;
+  final Random _random = Random();
+  int _currentIndex = 0;
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
-    _confettiController = ConfettiController(
-      duration: const Duration(seconds: 2),
-    );
+    _startRolling();
+  }
+
+  void _startRolling() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+      setState(() {
+        _currentIndex = _random.nextInt(asterMembers.length);
+      });
+    });
+
+    Future.delayed(const Duration(seconds: 2), () {
+      _timer?.cancel();
+      setState(() {});
+    });
   }
 
   @override
   void dispose() {
-    _confettiController.dispose();
+    _timer?.cancel();
     super.dispose();
   }
 
-  void rollDice() {
-    setState(() {
-      isRandomizing = true;
-      isRevealed = false;
-    });
-
-    int randomRoll = currentDiceRoll;
-    Timer.periodic(const Duration(milliseconds: 100), (timer) {
-      setState(() {
-        randomRoll = randomizer.nextInt(12) + 1;
-        currentDiceRoll = randomRoll;
-      });
-
-      if (timer.tick >= 30) {
-        timer.cancel();
-        setState(() {
-          isRevealed = true;
-          isRandomizing = false;
-          currentDiceRoll = randomRoll;
-          message = getRandomMessage(currentDiceRoll);
-        });
-        _confettiController.play();
-      }
-    });
-  }
-
   @override
-  Widget build(context) {
+  Widget build(BuildContext context) {
+    final member = asterMembers[_currentIndex];
     return Scaffold(
-      body: Stack(
-        children: [
-          // Background image
-          Container(
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/background.jpg'),
-                fit: BoxFit.cover,
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        backgroundColor: Colors.black87,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Image.asset('assets/images/logo.png', width: 40, height: 40),
+            const Expanded(
+              child: Center(
+                child: Text(
+                  'Twinkle through the night!',
+                  style: TextStyle(fontSize: 18),
+                ),
               ),
             ),
+            Image.asset('assets/images/ASTERISK-ENT-LOGO-1.png',
+                width: 40, height: 40),
+          ],
+        ),
+      ),
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/background.jpg',
+              fit: BoxFit.cover,
+            ),
           ),
-          // Overlay
-          Container(color: Colors.black.withOpacity(0.4)),
-          // Main content
           Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Image.asset(
-                  'assets/images/aster-member-$currentDiceRoll.jpg',
-                  width: 300,
-                  height: 300,
+                  'assets/images/aster-member-${_currentIndex + 1}.jpg',
+                  width: 350,
+                  height: 440,
                   fit: BoxFit.cover,
                 ),
-                const SizedBox(height: 30),
-                if (!isRandomizing && !isRevealed)
-                  const Text(
-                    'You ready?',
-                    style: TextStyle(color: Colors.white, fontSize: 24),
+                const SizedBox(height: 20),
+
+                // Stage Name (Large)
+                Text(
+                  member.stageName,
+                  style: const TextStyle(
+                    fontSize: 28,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
                   ),
-                if (isRevealed)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    child: Text(
-                      message,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 6),
+
+                // Real Name
+                Text(
+                  member.name,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    color: Colors.white70,
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                // Role
+                Text(
+                  member.role,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    color: Colors.white60,
+                  ),
+                ),
+
+                const SizedBox(height: 6),
+
+                // Birthday
+                Text(
+                  'Birthday: ${member.birthday}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.white60,
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Message
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Text(
+                    member.message,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontStyle: FontStyle.italic,
+                      color: Colors.white,
                     ),
                   ),
-                if (isRevealed)
-                  Column(
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: rollDice,
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Try Again'),
-                      ),
-                      const SizedBox(height: 10),
-                      TextButton.icon(
-                        onPressed: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (ctx) => const HomeScreen(),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.home),
-                        label: const Text('Back to Home'),
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-              ],
-            ),
-          ),
-          // Confetti
-          Align(
-            alignment: Alignment.topCenter,
-            child: ConfettiWidget(
-              confettiController: _confettiController,
-              blastDirectionality: BlastDirectionality.explosive,
-              shouldLoop: false,
-              colors: const [
-                Colors.purple,
-                Colors.blue,
-                Colors.white,
-                Colors.pink,
+                ),
+
+                const SizedBox(height: 30),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      icon: const Icon(Icons.arrow_back),
+                      label: const Text('Back'),
+                    ),
+                    const SizedBox(width: 20),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        _startRolling();
+                      },
+                      label: const Text('Next'),
+                      icon: const Icon(Icons.arrow_forward),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),

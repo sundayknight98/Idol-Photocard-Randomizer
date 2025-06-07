@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:audioplayers/audioplayers.dart';
 import 'dice_roller.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -9,88 +8,110 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
-  static final AudioPlayer _audioPlayer = AudioPlayer();
-  static bool _isPlaying = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _playMusicOnce();
-  }
-
-  Future<void> _playMusicOnce() async {
-    if (!_isPlaying) {
-      await _audioPlayer.setReleaseMode(ReleaseMode.loop);
-      await _audioPlayer.play(AssetSource('audio/bg_music.mp3'));
-      _isPlaying = true;
-    }
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.detached ||
-        state == AppLifecycleState.paused) {
-      _audioPlayer.stop(); // Stop music when app is closed or paused
-      _isPlaying = false;
-    }
-  }
-
-  void _startPicking() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (ctx) => const DiceRoller()),
-    );
-  }
+class _HomeScreenState extends State<HomeScreen> {
+  bool _isHovering = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
-          Container(
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/background.jpg'),
-                fit: BoxFit.cover,
-              ),
+          // Background image covering entire screen
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/background.jpg',
+              fit: BoxFit.cover,
             ),
           ),
-          Container(color: Colors.black.withOpacity(0.5)),
+          // Centered content column
           Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Image.asset('assets/images/logo.png', width: 180),
-                const SizedBox(height: 40),
+                // Logo image
+                Image.asset(
+                  'assets/images/logo.png',
+                  width: 160,
+                  height: 160,
+                ),
+                const SizedBox(height: 24),
+                // Text prompt
                 const Text(
-                  'Are you ready to pick your idol?',
+                  'A STAR Photocard?',
                   style: TextStyle(
+                    fontSize: 30,
                     color: Colors.white,
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w500,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 40),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.casino),
-                  label: const Text('Start Picking'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 30,
-                      vertical: 15,
+                const SizedBox(height: 15),
+                // Button with hover effect
+                MouseRegion(
+                  onEnter: (_) {
+                    setState(() {
+                      _isHovering = true;
+                    });
+                  },
+                  onExit: (_) {
+                    setState(() {
+                      _isHovering = false;
+                    });
+                  },
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const DiceRoller(),
+                        ),
+                      );
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 14, horizontal: 36),
+                      decoration: BoxDecoration(
+                        color: _isHovering ? Colors.white : Colors.transparent,
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                      child: Text(
+                        'Bloom & Shine!',
+                        style: TextStyle(
+                          color: _isHovering ? Colors.black : Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
-                    textStyle: const TextStyle(fontSize: 20),
                   ),
-                  onPressed: _startPicking,
+                ),
+              ],
+            ),
+          ),
+          // Bottom Footer
+          Positioned(
+            bottom: 30,
+            left: 0,
+            right: 0,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Presented by',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 15,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+                const SizedBox(height: 0),
+                Image.asset(
+                  'assets/images/ASTERISK-ENT-LOGO-2.png',
+                  width: 200,
+                  height: 75,
                 ),
               ],
             ),
